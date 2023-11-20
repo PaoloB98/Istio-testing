@@ -16,13 +16,20 @@ class ParentRef(BaseModel):
     sectionName: str | None = Field(default=None)
     group: str
 
+
 class Path(BaseModel):
     type: str
     value: str
 
+class Header(BaseModel):
+    name: str
+    type: str
+    value: str
+
+
 class Match(BaseModel):
     path: Path
-
+    headers: List[Header]
 
 class Rule(BaseModel):
     backendRefs: List[BackendRef]
