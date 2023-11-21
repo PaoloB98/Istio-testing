@@ -14,6 +14,8 @@ def main() -> int:
     logger.info("Starting...")
 
     case_b_tcp()
+    #case_a_http()
+    #case_b_http()
 
     return 0
 
@@ -25,9 +27,9 @@ def case_a_http():
 
     device = HTTPDevice(url_for_request="http://192.168.254.213/productpage")
     # Richieste continue.
-    device.continuous_requesting(time_seconds=40, interval_between_req=0.5)
+    device.continuous_requesting(time_seconds=80, interval_between_req=0.5)
 
-    sleep(5)
+    sleep(40)
     update_http_route("bookinfo-a", "nginx-serv", 80)
     device.thread.join()
 
@@ -37,13 +39,13 @@ def case_a_tcp():
     update_tcp_route("iperf-tcp-a", "iperf-service-a", 5201)
     sleep(0.5)
 
-    device = TCPDevice('192.168.254.238')
+    device = TCPDevice('192.168.254.238', "Device 1")
     # Richieste continue.
     device.start_iperf_test(10)
 
     sleep(5)
     update_tcp_route("iperf-tcp-a", "iperf-service-b", 5201)
-    device.thread.join()
+    device.process.join()
     update_tcp_route("iperf-tcp-a", "iperf-service-a", 5201)
 
 def case_b_http():
@@ -59,9 +61,9 @@ def case_b_http():
     sleep(0.5)
     device = HTTPDevice(url_for_request="http://192.168.254.213/productpage")
     # Continuous requests
-    device.continuous_requesting(time_seconds=3, interval_between_req=0.1)
+    device.continuous_requesting(time_seconds=40, interval_between_req=0.1)
 
-    sleep(1)
+    sleep(20)
     # Moving device to zone B
     device.change_device_zone(Zone.B)
     logger.info("#################Device zone has changed-!-!-!-!####################")
@@ -79,21 +81,16 @@ def case_b_tcp():
     # Give time to k8s to update
     sleep(0.5)
 
-    device1 = TCPDevice('192.168.254.238')
-    device1.start_iperf_test(10)
-    sleep(3)
-    device1.change_device_zone(Zone.B) # It is not doing anything for now once the test has already started.
+    device1 = TCPDevice('192.168.254.238', "Device 1")
+    device1.start_iperf_test(15)
+    device1.process.join() # Wait for the test to finish
 
-    # Wait before moving the device
-    sleep(25)
     create_tcp_route(deleted_route)
+    sleep(0.2)
+    device1.change_device_zone(Zone.B)
+    device1.start_iperf_test(15)
+    device1.process.join()
 
-    device2 = TCPDevice('192.168.254.238')
-    device2.change_device_zone(Zone.A) # Starting a new dev on zone B
-    device2.start_iperf_test(20)
-
-    device1.thread.join()
-    device2.thread.join()
     logger.info("Case B TCP ENDED")
 
 if __name__ == '__main__':
