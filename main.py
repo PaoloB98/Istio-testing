@@ -13,9 +13,11 @@ logger = logging.getLogger("Main")
 def main() -> int:
     logger.info("Starting...")
 
+    #case_a_tcp()
     case_b_tcp()
     #case_a_http()
     #case_b_http()
+    #case_c_http()
 
     return 0
 
@@ -27,9 +29,9 @@ def case_a_http():
 
     device = HTTPDevice(url_for_request="http://192.168.254.213/productpage")
     # Richieste continue.
-    device.continuous_requesting(time_seconds=80, interval_between_req=0.5)
+    device.continuous_requesting(time_seconds=5, interval_between_req=0.05)
 
-    sleep(40)
+    sleep(1)
     update_http_route("bookinfo-a", "nginx-serv", 80)
     device.thread.join()
 
@@ -41,7 +43,7 @@ def case_a_tcp():
 
     device = TCPDevice('192.168.254.238', "Device 1")
     # Richieste continue.
-    device.start_iperf_test(10)
+    device.start_iperf_test(30)
 
     sleep(5)
     update_tcp_route("iperf-tcp-a", "iperf-service-b", 5201)
@@ -61,9 +63,9 @@ def case_b_http():
     sleep(0.5)
     device = HTTPDevice(url_for_request="http://192.168.254.213/productpage")
     # Continuous requests
-    device.continuous_requesting(time_seconds=40, interval_between_req=0.1)
+    device.continuous_requesting(time_seconds=20, interval_between_req=0.1)
 
-    sleep(20)
+    sleep(7)
     # Moving device to zone B
     device.change_device_zone(Zone.B)
     logger.info("#################Device zone has changed-!-!-!-!####################")
@@ -82,16 +84,39 @@ def case_b_tcp():
     sleep(0.5)
 
     device1 = TCPDevice('192.168.254.238', "Device 1")
-    device1.start_iperf_test(15)
+    device1.start_iperf_test(35)
     device1.process.join() # Wait for the test to finish
+    logger.info("Finish")
 
     create_tcp_route(deleted_route)
-    sleep(0.2)
     device1.change_device_zone(Zone.B)
-    device1.start_iperf_test(15)
+    sleep(0.2)
+    device1.start_iperf_test(25)
     device1.process.join()
+    logger.info("Finish")
 
     logger.info("Case B TCP ENDED")
 
+def case_c_http():
+    # PRESET
+    # Resetting zone A http rule
+    update_http_route("bookinfo-a", "productpage", 9080)
+    # Resetting zone B http rule
+    update_http_route("bookinfo-b", "nginx-serv", 80)
+
+    # Starting device HTTP
+    sleep(0.5)
+    device = HTTPDevice(url_for_request="http://192.168.254.213/productpage")
+    # Continuous requests
+    device.continuous_requesting(time_seconds=20, interval_between_req=0.1)
+
+    sleep(7)
+    # Moving device to zone B
+    device.change_device_zone(Zone.B)
+    logger.info("#################Device zone has changed-!-!-!-!####################")
+    device.thread.join()
+
 if __name__ == '__main__':
     sys.exit(main())  # next section explains the use of sys.exit
+
+

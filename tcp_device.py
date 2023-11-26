@@ -29,8 +29,8 @@ class TCPDevice:
         client.server_hostname = remote_host
         client.verbose = False
         client.reverse = False
-        client.num_streams = 10
-        client.bandwidth = 1000000000
+        client.num_streams = 1
+        client.bandwidth = 100000000
 
         self.client = client
 
@@ -44,6 +44,8 @@ class TCPDevice:
         self.lock.release()
 
     def start_iperf_test(self, time_seconds: int):
+        logger.info("Starting Thread for iperf device")
+        #self._iperf_test(time_seconds)
         self.process = Process(target=self._iperf_test, args=(time_seconds,))
         self.process.start()
 
